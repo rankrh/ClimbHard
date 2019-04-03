@@ -160,6 +160,9 @@ activities.set_axis(
     ['running', 'yoga', 'biking', 'cardio', 'hiking', 'other_cross'],
     axis=1, inplace=True)
 
+activities = activities * 1
+
+
 climbers = pd.concat([climbers, activities], axis=1)
 climbers.drop('Other activities (ie yoga, cardio)', axis=1, inplace=True)
 
@@ -173,19 +176,27 @@ climbers[route] = climbers[route].replace({"I don't climb routes": 0})
 climbers[route] = climbers[route].astype('int32')
 climbers[route] = climbers[route].replace({0:None})
 
-climbers.experience = climbers.experience.str.split()
-climbers.experience = climbers.experience.apply(lambda x: x[0])
-
-
 metrics = [
     'pull_rep', 'pull_weight', 'push_rep', 'lsit_time', 'freq_climb',
     'hrs_climb', 'hrs_train', 'freq_hang', 'weight_hang_half',
     'weight_hang_open', 'mm_hang_half', 'mm_hang_open', 'campus_freq', 
     'campus_dur', 'end_freq', 'cross_freq', 'hrs_cross', 'height', 'weight',
-    'wingspan']
+    'wingspan', 'experience']
 
 climbers[metrics] = climbers[metrics].applymap(
-    lambda x: next(iter(re.findall('([1-9]+0*)', str(x))), None)) 
+    lambda x: next(iter(re.findall('([1-9]+0*)', str(x))), None))
+
+for metric in metrics:
+    climbers[metric] = pd.to_numeric(climbers[metric])
+    
+climbers.height = climbers.height.apply(lambda x: x * 100 if x < 2 else x)
+climbers[climbers.height < 10] = None
+climbers.height = climbers.height.apply(lambda x: x / 10 if x > 1000 else x)
+
+climbers.wingspan = climbers.wingspan.apply(lambda x: x * 100 if x < 10 else x)
+climbers.wingspan = climbers.wingspan.apply(lambda x: x / 10 if x > 1000 else x)
+
+climbers[climbers.weight > 150] = None
 
 climbers.to_csv('climbhard.csv', index=False)    
     
