@@ -157,13 +157,35 @@ activities = pd.concat(
     axis=1) 
 
 activities.set_axis(
-    ['running', 'yoga', 'biking', 'cardio', 'hiking', 'other'],
+    ['running', 'yoga', 'biking', 'cardio', 'hiking', 'other_cross'],
     axis=1, inplace=True)
 
 climbers = pd.concat([climbers, activities], axis=1)
 climbers.drop('Other activities (ie yoga, cardio)', axis=1, inplace=True)
 
-climbers.to_csv('climbhard.csv')    
     
-    
+boulder = ['boulder_max', 'boulder_recent', 'boulder_90']
+climbers[boulder] = climbers[boulder].applymap(
+    lambda x: None if x == "I don't boulder" else int(x[1:]))
+
+route = ['route_max', 'route_recent', 'route_90']
+climbers[route] = climbers[route].replace({"I don't climb routes": 0})
+climbers[route] = climbers[route].astype('int32')
+climbers[route] = climbers[route].replace({0:None})
+
+climbers.experience = climbers.experience.str.split()
+climbers.experience = climbers.experience.apply(lambda x: x[0])
+
+
+metrics = [
+    'pull_rep', 'pull_weight', 'push_rep', 'lsit_time', 'freq_climb',
+    'hrs_climb', 'hrs_train', 'freq_hang', 'weight_hang_half',
+    'weight_hang_open', 'mm_hang_half', 'mm_hang_open', 'campus_freq', 
+    'campus_dur', 'end_freq', 'cross_freq', 'hrs_cross', 'height', 'weight',
+    'wingspan']
+
+climbers[metrics] = climbers[metrics].applymap(
+    lambda x: next(iter(re.findall('([1-9]+0*)', str(x))), None)) 
+
+climbers.to_csv('climbhard.csv', index=False)    
     
