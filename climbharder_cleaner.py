@@ -161,11 +161,11 @@ activities.set_axis(
     axis=1, inplace=True)
 
 activities = activities * 1
+climbers['act_count'] = np.sum(activities, axis=1)
 
 
 climbers = pd.concat([climbers, activities], axis=1)
 climbers.drop('Other activities (ie yoga, cardio)', axis=1, inplace=True)
-
     
 boulder = ['boulder_max', 'boulder_recent', 'boulder_90']
 climbers[boulder] = climbers[boulder].applymap(
@@ -184,19 +184,65 @@ metrics = [
     'wingspan', 'experience']
 
 climbers[metrics] = climbers[metrics].applymap(
-    lambda x: next(iter(re.findall('([1-9]+0*)', str(x))), None))
+    lambda x: next(iter(re.findall('([0-9]+)', str(x))), None))
 
 for metric in metrics:
     climbers[metric] = pd.to_numeric(climbers[metric])
     
 climbers.height = climbers.height.apply(lambda x: x * 100 if x < 2 else x)
-climbers[climbers.height < 10] = None
+climbers.loc[climbers.height < 10, 'height'] = climbers.height.mean()
 climbers.height = climbers.height.apply(lambda x: x / 10 if x > 1000 else x)
 
 climbers.wingspan = climbers.wingspan.apply(lambda x: x * 100 if x < 10 else x)
 climbers.wingspan = climbers.wingspan.apply(lambda x: x / 10 if x > 1000 else x)
+climbers.loc[climbers.wingspan.isna(), 'wingspan'] = climbers.wingspan.mean()
 
-climbers[climbers.weight > 150] = None
+climbers.loc[climbers.weight > 200, 'weight'] = None
+
+climbers.loc[climbers.gender == "Male", 'gender'] = 0
+climbers.loc[climbers.gender == "Female", 'gender'] = 1
+
+climbers.loc[
+    climbers.weight_hang_half.isna(),
+    'weight_hang_half'] = 0
+
+climbers.loc[
+    climbers.weight_hang_open.isna(),
+    'weight_hang_open'] = 0
+        
+climbers.loc[
+    climbers.mm_hang_half.isna(),
+    'mm_hang_half'] = 0
+        
+climbers.loc[
+    climbers.mm_hang_open.isna(),
+    'mm_hang_open'] = 0
+
+climbers.loc[
+    climbers.pull_weight.isna(),
+    'pull_weight'] = 0
+
+climbers.loc[
+    climbers.pull_rep.isna(),
+    'pull_rep'] = 0
+
+climbers.loc[
+    climbers.push_rep.isna(),
+    'push_rep'] = 0
+        
+climbers.loc[
+    climbers.lsit_time.isna(),
+    'lsit_time'] = 0
+        
+climbers.dropna(
+    subset=[
+        'boulder_max',
+        'boulder_recent',
+        'boulder_90',
+        'route_max',
+        'route_recent',
+        'route_90'],
+    inplace=True)
 
 climbers.to_csv('climbhard.csv', index=False)    
     
